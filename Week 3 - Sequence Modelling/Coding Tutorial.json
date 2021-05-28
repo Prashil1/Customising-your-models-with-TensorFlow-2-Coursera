@@ -1,0 +1,2497 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2.0.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "import tensorflow as tf\n",
+    "print(tf.__version__)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Sequence modelling \n",
+    "\n",
+    "## Coding tutorials\n",
+    " #### [1.  The IMDb dataset](#coding_tutorial_1)\n",
+    " #### [2. Padding and masking sequence data](#coding_tutorial_2)\n",
+    " #### [3. The Embedding layer](#coding_tutorial_3)\n",
+    " #### [4. The Embedding Projector](#coding_tutorial_4)\n",
+    " #### [5. Recurrent neural network layers](#coding_tutorial_5)\n",
+    " #### [6. Stacked RNNs and the Bidirectional wrapper](#coding_tutorial_6)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "***\n",
+    "<a id=\"coding_tutorial_1\"></a>\n",
+    "## The IMDb Dataset"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Load the IMDB review sentiment dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Import imdb\n",
+    "\n",
+    "import tensorflow.keras.datasets.imdb as imdb"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/imdb.npz\n",
+      "17465344/17464789 [==============================] - 0s 0us/step\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Download and assign the data set using load_data()\n",
+    "\n",
+    "(x_train, y_train), (x_test, y_test) = imdb.load_data()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Inspect the dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "numpy.ndarray"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect the type of the data\n",
+    "\n",
+    "type(x_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(25000,)"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect the shape of the data\n",
+    "\n",
+    "x_train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[1,\n",
+       " 14,\n",
+       " 22,\n",
+       " 16,\n",
+       " 43,\n",
+       " 530,\n",
+       " 973,\n",
+       " 1622,\n",
+       " 1385,\n",
+       " 65,\n",
+       " 458,\n",
+       " 4468,\n",
+       " 66,\n",
+       " 3941,\n",
+       " 4,\n",
+       " 173,\n",
+       " 36,\n",
+       " 256,\n",
+       " 5,\n",
+       " 25,\n",
+       " 100,\n",
+       " 43,\n",
+       " 838,\n",
+       " 112,\n",
+       " 50,\n",
+       " 670,\n",
+       " 22665,\n",
+       " 9,\n",
+       " 35,\n",
+       " 480,\n",
+       " 284,\n",
+       " 5,\n",
+       " 150,\n",
+       " 4,\n",
+       " 172,\n",
+       " 112,\n",
+       " 167,\n",
+       " 21631,\n",
+       " 336,\n",
+       " 385,\n",
+       " 39,\n",
+       " 4,\n",
+       " 172,\n",
+       " 4536,\n",
+       " 1111,\n",
+       " 17,\n",
+       " 546,\n",
+       " 38,\n",
+       " 13,\n",
+       " 447,\n",
+       " 4,\n",
+       " 192,\n",
+       " 50,\n",
+       " 16,\n",
+       " 6,\n",
+       " 147,\n",
+       " 2025,\n",
+       " 19,\n",
+       " 14,\n",
+       " 22,\n",
+       " 4,\n",
+       " 1920,\n",
+       " 4613,\n",
+       " 469,\n",
+       " 4,\n",
+       " 22,\n",
+       " 71,\n",
+       " 87,\n",
+       " 12,\n",
+       " 16,\n",
+       " 43,\n",
+       " 530,\n",
+       " 38,\n",
+       " 76,\n",
+       " 15,\n",
+       " 13,\n",
+       " 1247,\n",
+       " 4,\n",
+       " 22,\n",
+       " 17,\n",
+       " 515,\n",
+       " 17,\n",
+       " 12,\n",
+       " 16,\n",
+       " 626,\n",
+       " 18,\n",
+       " 19193,\n",
+       " 5,\n",
+       " 62,\n",
+       " 386,\n",
+       " 12,\n",
+       " 8,\n",
+       " 316,\n",
+       " 8,\n",
+       " 106,\n",
+       " 5,\n",
+       " 4,\n",
+       " 2223,\n",
+       " 5244,\n",
+       " 16,\n",
+       " 480,\n",
+       " 66,\n",
+       " 3785,\n",
+       " 33,\n",
+       " 4,\n",
+       " 130,\n",
+       " 12,\n",
+       " 16,\n",
+       " 38,\n",
+       " 619,\n",
+       " 5,\n",
+       " 25,\n",
+       " 124,\n",
+       " 51,\n",
+       " 36,\n",
+       " 135,\n",
+       " 48,\n",
+       " 25,\n",
+       " 1415,\n",
+       " 33,\n",
+       " 6,\n",
+       " 22,\n",
+       " 12,\n",
+       " 215,\n",
+       " 28,\n",
+       " 77,\n",
+       " 52,\n",
+       " 5,\n",
+       " 14,\n",
+       " 407,\n",
+       " 16,\n",
+       " 82,\n",
+       " 10311,\n",
+       " 8,\n",
+       " 4,\n",
+       " 107,\n",
+       " 117,\n",
+       " 5952,\n",
+       " 15,\n",
+       " 256,\n",
+       " 4,\n",
+       " 31050,\n",
+       " 7,\n",
+       " 3766,\n",
+       " 5,\n",
+       " 723,\n",
+       " 36,\n",
+       " 71,\n",
+       " 43,\n",
+       " 530,\n",
+       " 476,\n",
+       " 26,\n",
+       " 400,\n",
+       " 317,\n",
+       " 46,\n",
+       " 7,\n",
+       " 4,\n",
+       " 12118,\n",
+       " 1029,\n",
+       " 13,\n",
+       " 104,\n",
+       " 88,\n",
+       " 4,\n",
+       " 381,\n",
+       " 15,\n",
+       " 297,\n",
+       " 98,\n",
+       " 32,\n",
+       " 2071,\n",
+       " 56,\n",
+       " 26,\n",
+       " 141,\n",
+       " 6,\n",
+       " 194,\n",
+       " 7486,\n",
+       " 18,\n",
+       " 4,\n",
+       " 226,\n",
+       " 22,\n",
+       " 21,\n",
+       " 134,\n",
+       " 476,\n",
+       " 26,\n",
+       " 480,\n",
+       " 5,\n",
+       " 144,\n",
+       " 30,\n",
+       " 5535,\n",
+       " 18,\n",
+       " 51,\n",
+       " 36,\n",
+       " 28,\n",
+       " 224,\n",
+       " 92,\n",
+       " 25,\n",
+       " 104,\n",
+       " 4,\n",
+       " 226,\n",
+       " 65,\n",
+       " 16,\n",
+       " 38,\n",
+       " 1334,\n",
+       " 88,\n",
+       " 12,\n",
+       " 16,\n",
+       " 283,\n",
+       " 5,\n",
+       " 16,\n",
+       " 4472,\n",
+       " 113,\n",
+       " 103,\n",
+       " 32,\n",
+       " 15,\n",
+       " 16,\n",
+       " 5345,\n",
+       " 19,\n",
+       " 178,\n",
+       " 32]"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Display the first dataset element input\n",
+    "# Notice encoding\n",
+    "\n",
+    "x_train[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Display the first dataset element output\n",
+    "\n",
+    "y_train[0]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Load dataset with different options"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "((array([list([1, 14, 22, 16, 43, 530, 973, 1622, 1385, 65, 458, 4468, 66, 3941, 4, 173, 36, 256, 5, 25, 100, 43, 838, 112, 50, 670, 22665, 9, 35, 480, 284, 5, 150, 4, 172, 112, 167, 21631, 336, 385, 39, 4, 172, 4536, 1111, 17, 546, 38, 13, 447, 4, 192, 50, 16, 6, 147, 2025, 19, 14, 22, 4, 1920, 4613, 469, 4, 22, 71, 87, 12, 16, 43, 530, 38, 76, 15, 13, 1247, 4, 22, 17, 515, 17, 12, 16, 626, 18, 19193, 5, 62, 386, 12, 8, 316, 8, 106, 5, 4, 2223, 5244, 16, 480, 66, 3785, 33, 4, 130, 12, 16, 38, 619, 5, 25, 124, 51, 36, 135, 48, 25, 1415, 33, 6, 22, 12, 215, 28, 77, 52, 5, 14, 407, 16, 82, 10311, 8, 4, 107, 117, 5952, 15, 256, 4, 31050, 7, 3766, 5, 723, 36, 71, 43, 530, 476, 26, 400, 317, 46, 7, 4, 12118, 1029, 13, 104, 88, 4, 381, 15, 297, 98, 32, 2071, 56, 26, 141, 6, 194, 7486, 18, 4, 226, 22, 21, 134, 476, 26, 480, 5, 144, 30, 5535, 18, 51, 36, 28, 224, 92, 25, 104, 4, 226, 65, 16, 38, 1334, 88, 12, 16, 283, 5, 16, 4472, 113, 103, 32, 15, 16, 5345, 19, 178, 32]),\n",
+       "         list([1, 194, 1153, 194, 8255, 78, 228, 5, 6, 1463, 4369, 5012, 134, 26, 4, 715, 8, 118, 1634, 14, 394, 20, 13, 119, 954, 189, 102, 5, 207, 110, 3103, 21, 14, 69, 188, 8, 30, 23, 7, 4, 249, 126, 93, 4, 114, 9, 2300, 1523, 5, 647, 4, 116, 9, 35, 8163, 4, 229, 9, 340, 1322, 4, 118, 9, 4, 130, 4901, 19, 4, 1002, 5, 89, 29, 952, 46, 37, 4, 455, 9, 45, 43, 38, 1543, 1905, 398, 4, 1649, 26, 6853, 5, 163, 11, 3215, 10156, 4, 1153, 9, 194, 775, 7, 8255, 11596, 349, 2637, 148, 605, 15358, 8003, 15, 123, 125, 68, 23141, 6853, 15, 349, 165, 4362, 98, 5, 4, 228, 9, 43, 36893, 1157, 15, 299, 120, 5, 120, 174, 11, 220, 175, 136, 50, 9, 4373, 228, 8255, 5, 25249, 656, 245, 2350, 5, 4, 9837, 131, 152, 491, 18, 46151, 32, 7464, 1212, 14, 9, 6, 371, 78, 22, 625, 64, 1382, 9, 8, 168, 145, 23, 4, 1690, 15, 16, 4, 1355, 5, 28, 6, 52, 154, 462, 33, 89, 78, 285, 16, 145, 95]),\n",
+       "         list([1, 14, 47, 8, 30, 31, 7, 4, 249, 108, 7, 4, 5974, 54, 61, 369, 13, 71, 149, 14, 22, 112, 4, 2401, 311, 12, 16, 3711, 33, 75, 43, 1829, 296, 4, 86, 320, 35, 534, 19, 263, 4821, 1301, 4, 1873, 33, 89, 78, 12, 66, 16, 4, 360, 7, 4, 58, 316, 334, 11, 4, 1716, 43, 645, 662, 8, 257, 85, 1200, 42, 1228, 2578, 83, 68, 3912, 15, 36, 165, 1539, 278, 36, 69, 44076, 780, 8, 106, 14, 6905, 1338, 18, 6, 22, 12, 215, 28, 610, 40, 6, 87, 326, 23, 2300, 21, 23, 22, 12, 272, 40, 57, 31, 11, 4, 22, 47, 6, 2307, 51, 9, 170, 23, 595, 116, 595, 1352, 13, 191, 79, 638, 89, 51428, 14, 9, 8, 106, 607, 624, 35, 534, 6, 227, 7, 129, 113]),\n",
+       "         ...,\n",
+       "         list([1, 11, 6, 230, 245, 6401, 9, 6, 1225, 446, 86527, 45, 2174, 84, 8322, 4007, 21, 4, 912, 84, 14532, 325, 725, 134, 15271, 1715, 84, 5, 36, 28, 57, 1099, 21, 8, 140, 8, 703, 5, 11656, 84, 56, 18, 1644, 14, 9, 31, 7, 4, 9406, 1209, 2295, 26094, 1008, 18, 6, 20, 207, 110, 563, 12, 8, 2901, 17793, 8, 97, 6, 20, 53, 4767, 74, 4, 460, 364, 1273, 29, 270, 11, 960, 108, 45, 40, 29, 2961, 395, 11, 6, 4065, 500, 7, 14492, 89, 364, 70, 29, 140, 4, 64, 4780, 11, 4, 2678, 26, 178, 4, 529, 443, 17793, 5, 27, 710, 117, 74936, 8123, 165, 47, 84, 37, 131, 818, 14, 595, 10, 10, 61, 1242, 1209, 10, 10, 288, 2260, 1702, 34, 2901, 17793, 4, 65, 496, 4, 231, 7, 790, 5, 6, 320, 234, 2766, 234, 1119, 1574, 7, 496, 4, 139, 929, 2901, 17793, 7750, 5, 4241, 18, 4, 8497, 13164, 250, 11, 1818, 7561, 4, 4217, 5408, 747, 1115, 372, 1890, 1006, 541, 9303, 7, 4, 59, 11027, 4, 3586, 22459]),\n",
+       "         list([1, 1446, 7079, 69, 72, 3305, 13, 610, 930, 8, 12, 582, 23, 5, 16, 484, 685, 54, 349, 11, 4120, 2959, 45, 58, 1466, 13, 197, 12, 16, 43, 23, 21469, 5, 62, 30, 145, 402, 11, 4131, 51, 575, 32, 61, 369, 71, 66, 770, 12, 1054, 75, 100, 2198, 8, 4, 105, 37, 69, 147, 712, 75, 3543, 44, 257, 390, 5, 69, 263, 514, 105, 50, 286, 1814, 23, 4, 123, 13, 161, 40, 5, 421, 4, 116, 16, 897, 13, 40691, 40, 319, 5872, 112, 6700, 11, 4803, 121, 25, 70, 3468, 4, 719, 3798, 13, 18, 31, 62, 40, 8, 7200, 4, 29455, 7, 14, 123, 5, 942, 25, 8, 721, 12, 145, 5, 202, 12, 160, 580, 202, 12, 6, 52, 58, 11418, 92, 401, 728, 12, 39, 14, 251, 8, 15, 251, 5, 21213, 12, 38, 84, 80, 124, 12, 9, 23]),\n",
+       "         list([1, 17, 6, 194, 337, 7, 4, 204, 22, 45, 254, 8, 106, 14, 123, 4, 12815, 270, 14437, 5, 16923, 12255, 732, 2098, 101, 405, 39, 14, 1034, 4, 1310, 9, 115, 50, 305, 12, 47, 4, 168, 5, 235, 7, 38, 111, 699, 102, 7, 4, 4039, 9245, 9, 24, 6, 78, 1099, 17, 2345, 16553, 21, 27, 9685, 6139, 5, 29043, 1603, 92, 1183, 4, 1310, 7, 4, 204, 42, 97, 90, 35, 221, 109, 29, 127, 27, 118, 8, 97, 12, 157, 21, 6789, 85010, 9, 6, 66, 78, 1099, 4, 631, 1191, 5, 2642, 272, 191, 1070, 6, 7585, 8, 2197, 70907, 10755, 544, 5, 383, 1271, 848, 1468, 12183, 497, 16876, 8, 1597, 8778, 19280, 21, 60, 27, 239, 9, 43, 8368, 209, 405, 10, 10, 12, 764, 40, 4, 248, 20, 12, 16, 5, 174, 1791, 72, 7, 51, 6, 1739, 22, 4, 204, 131, 9])],\n",
+       "        dtype=object), array([1, 0, 0, ..., 0, 1, 0])),\n",
+       " (array([list([1, 591, 202, 14, 31, 6, 717, 10, 10, 18142, 10698, 5, 4, 360, 7, 4, 177, 5760, 394, 354, 4, 123, 9, 1035, 1035, 1035, 10, 10, 13, 92, 124, 89, 488, 7944, 100, 28, 1668, 14, 31, 23, 27, 7479, 29, 220, 468, 8, 124, 14, 286, 170, 8, 157, 46, 5, 27, 239, 16, 179, 15387, 38, 32, 25, 7944, 451, 202, 14, 6, 717]),\n",
+       "         list([1, 14, 22, 3443, 6, 176, 7, 5063, 88, 12, 2679, 23, 1310, 5, 109, 943, 4, 114, 9, 55, 606, 5, 111, 7, 4, 139, 193, 273, 23, 4, 172, 270, 11, 7216, 10626, 4, 8463, 2801, 109, 1603, 21, 4, 22, 3861, 8, 6, 1193, 1330, 10, 10, 4, 105, 987, 35, 841, 16873, 19, 861, 1074, 5, 1987, 17975, 45, 55, 221, 15, 670, 5304, 526, 14, 1069, 4, 405, 5, 2438, 7, 27, 85, 108, 131, 4, 5045, 5304, 3884, 405, 9, 3523, 133, 5, 50, 13, 104, 51, 66, 166, 14, 22, 157, 9, 4, 530, 239, 34, 8463, 2801, 45, 407, 31, 7, 41, 3778, 105, 21, 59, 299, 12, 38, 950, 5, 4521, 15, 45, 629, 488, 2733, 127, 6, 52, 292, 17, 4, 6936, 185, 132, 1988, 5304, 1799, 488, 2693, 47, 6, 392, 173, 4, 21686, 4378, 270, 2352, 4, 1500, 7, 4, 65, 55, 73, 11, 346, 14, 20, 9, 6, 976, 2078, 7, 5293, 861, 12746, 5, 4182, 30, 3127, 23651, 56, 4, 841, 5, 990, 692, 8, 4, 1669, 398, 229, 10, 10, 13, 2822, 670, 5304, 14, 9, 31, 7, 27, 111, 108, 15, 2033, 19, 7836, 1429, 875, 551, 14, 22, 9, 1193, 21, 45, 4829, 5, 45, 252, 8, 12508, 6, 565, 921, 3639, 39, 4, 529, 48, 25, 181, 8, 67, 35, 1732, 22, 49, 238, 60, 135, 1162, 14, 9, 290, 4, 58, 10, 10, 472, 45, 55, 878, 8, 169, 11, 374, 5687, 25, 203, 28, 8, 818, 12, 125, 4, 3077]),\n",
+       "         list([1, 111, 748, 4368, 1133, 33782, 24563, 4, 87, 1551, 1262, 7, 31, 318, 9459, 7, 4, 498, 5076, 748, 63, 29, 5161, 220, 686, 10941, 5, 17, 12, 575, 220, 2507, 17, 6, 185, 132, 24563, 16, 53, 928, 11, 51278, 74, 4, 438, 21, 27, 10044, 589, 8, 22, 107, 20123, 19550, 997, 1638, 8, 35, 2076, 9019, 11, 22, 231, 54, 29, 1706, 29, 100, 18995, 2425, 34, 12998, 8738, 48078, 5, 19353, 98, 31, 2122, 33, 6, 58, 14, 3808, 1638, 8, 4, 365, 7, 2789, 3761, 356, 346, 4, 27608, 1060, 63, 29, 93, 11, 5421, 11, 15236, 33, 6, 58, 54, 1270, 431, 748, 7, 32, 2580, 16, 11, 94, 19469, 10, 10, 4, 993, 45222, 7, 4, 1766, 2634, 2164, 24563, 8, 847, 8, 1450, 121, 31, 7, 27, 86, 2663, 10760, 16, 6, 465, 993, 2006, 30995, 573, 17, 61862, 42, 4, 17345, 37, 473, 6, 711, 6, 8869, 7, 328, 212, 70, 30, 258, 11, 220, 32, 7, 108, 21, 133, 12, 9, 55, 465, 849, 3711, 53, 33, 2071, 1969, 37, 70, 1144, 4, 5940, 1409, 74, 476, 37, 62, 91, 1329, 169, 4, 1330, 10104, 146, 655, 2212, 5, 258, 12, 184, 10104, 546, 5, 849, 10333, 7, 4, 22, 1436, 18, 631, 1386, 797, 7, 4, 8712, 71, 348, 425, 4320, 1061, 19, 10288, 5, 12141, 11, 661, 8, 339, 17863, 4, 2455, 11434, 7, 4, 1962, 10, 10, 263, 787, 9, 270, 11, 6, 9466, 4, 61862, 48414, 121, 4, 5437, 26, 4434, 19, 68, 1372, 5, 28, 446, 6, 318, 7149, 8, 67, 51, 36, 70, 81, 8, 4392, 2294, 36, 1197, 8, 68411, 25399, 18, 6, 711, 4, 9909, 26, 10296, 1125, 11, 14, 636, 720, 12, 426, 28, 77, 776, 8, 97, 38, 111, 7489, 6175, 168, 1239, 5189, 137, 25399, 18, 27, 173, 9, 2399, 17, 6, 12397, 428, 14657, 232, 11, 4, 8014, 37, 272, 40, 2708, 247, 30, 656, 6, 13182, 54, 25399, 3292, 98, 6, 2840, 40, 558, 37, 6093, 98, 4, 17345, 1197, 15, 14, 9, 57, 4893, 5, 4659, 6, 275, 711, 7937, 25399, 3292, 98, 6, 31036, 10, 10, 6639, 19, 14, 10241, 267, 162, 711, 37, 5900, 752, 98, 4, 17345, 2378, 90, 19, 6, 73284, 7, 36744, 1810, 77553, 4, 4770, 3183, 930, 8, 508, 90, 4, 1317, 8, 4, 48414, 17, 15454, 3965, 1853, 4, 1494, 8, 4468, 189, 4, 31036, 6287, 5774, 4, 4770, 5, 95, 271, 23, 6, 7742, 6063, 21627, 5437, 33, 1526, 6, 425, 3155, 33697, 4535, 1636, 7, 4, 4669, 11966, 469, 4, 4552, 54, 4, 150, 5664, 17345, 280, 53, 68411, 25399, 18, 339, 29, 1978, 27, 7885, 5, 17303, 68, 1830, 19, 6571, 14605, 4, 1515, 7, 263, 65, 2132, 34, 6, 5680, 7489, 43, 159, 29, 9, 4706, 9, 387, 73, 195, 584, 10, 10, 1069, 4, 58, 810, 54, 14, 6078, 117, 22, 16, 93, 5, 1069, 4, 192, 15, 12, 16, 93, 34, 6, 1766, 28228, 33, 4, 5673, 7, 15, 18760, 9252, 3286, 325, 12, 62, 30, 776, 8, 67, 14, 17, 6, 12214, 44, 148, 687, 24563, 203, 42, 203, 24, 28, 69, 32157, 6676, 11, 330, 54, 29, 93, 61862, 21, 845, 14148, 27, 1099, 7, 819, 4, 22, 1407, 17, 6, 14967, 787, 7, 2460, 19569, 61862, 100, 30, 4, 3737, 3617, 3169, 2321, 42, 1898, 11, 4, 3814, 42, 101, 704, 7, 101, 999, 15, 1625, 94, 2926, 180, 5, 9, 9101, 34, 15205, 45, 6, 1429, 22, 60, 6, 1220, 31, 11, 94, 6408, 96, 21, 94, 749, 9, 57, 975]),\n",
+       "         ...,\n",
+       "         list([1, 13, 1408, 15, 8, 135, 14, 9, 35, 32, 46, 394, 20, 62, 30, 5093, 21, 45, 184, 78, 4, 1492, 910, 769, 2290, 2515, 395, 4257, 5, 1454, 11, 119, 16946, 89, 1036, 4, 116, 218, 78, 21, 407, 100, 30, 128, 262, 15, 7, 185, 2280, 284, 1842, 60664, 37, 315, 4, 226, 20, 272, 2942, 40, 29, 152, 60, 181, 8, 30, 50, 553, 362, 80, 119, 12, 21, 846, 5518]),\n",
+       "         list([1, 11, 119, 241, 9, 4, 840, 20, 12, 468, 15, 94, 3684, 562, 791, 39, 4, 86, 107, 8, 97, 14, 31, 33, 4, 2960, 7, 743, 46, 1028, 9, 3531, 5, 4, 768, 47, 8, 79, 90, 145, 164, 162, 50, 6, 501, 119, 7, 9, 4, 78, 232, 15, 16, 224, 11, 4, 333, 20, 4, 985, 200, 5, 28739, 5, 9, 1861, 8, 79, 357, 4, 20, 47, 220, 57, 206, 139, 11, 12, 5, 55, 117, 212, 13, 1276, 92, 124, 51, 45, 1188, 71, 536, 13, 520, 14, 20, 6, 2302, 7, 470]),\n",
+       "         list([1, 6, 52, 7465, 430, 22, 9, 220, 2594, 8, 28, 24357, 519, 3227, 6, 769, 15, 47, 6, 3482, 4067, 8, 114, 5, 33, 222, 31, 55, 184, 704, 5586, 18020, 19, 346, 3153, 5, 6, 364, 350, 4, 184, 5586, 9, 133, 1810, 11, 5417, 13226, 21, 4, 7298, 42657, 570, 50, 2005, 2643, 9, 6, 1249, 17, 6, 25194, 27803, 21, 17, 6, 1211, 232, 1138, 2249, 29, 266, 56, 96, 346, 194, 308, 9, 194, 21, 29, 218, 1078, 19, 4, 78, 173, 7, 27, 20067, 5698, 3406, 718, 21264, 9, 6, 6907, 17, 210, 5, 3281, 5677, 47, 77, 395, 14, 172, 173, 18, 2740, 2931, 4517, 82, 127, 27, 173, 11, 6, 392, 217, 21, 50, 9, 57, 65, 12, 14274, 53, 40, 35, 390, 7, 11, 4, 3567, 7, 4, 314, 74, 6, 792, 22, 16261, 19, 714, 727, 5205, 382, 4, 91, 6533, 439, 19, 14, 20, 9, 1441, 5805, 1118, 4, 756, 25, 124, 4, 31, 12, 16, 93, 804, 34, 2005, 2643])],\n",
+       "        dtype=object),\n",
+       "  array([0, 1, 1, ..., 0, 0, 0])))"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Load the dataset with defaults\n",
+    "imdb.load_data(path='imdb.npz',\n",
+    "              index_from=3)\n",
+    "\n",
+    "# ~/.keras/dataset/"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Limit the vocabulary to the top 500 words using num_words\n",
+    "\n",
+    "imbd.load_data(num_words=1000)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Ignore the top 10 most frequent words using skip_top\n",
+    "\n",
+    "imbd.load_data(skip_top=10, num_words=1000, oov_char=2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Limit the sequence lengths to 500 using maxlen\n",
+    "\n",
+    "imbd.load_data(maxlen=500)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Use '1' as the character that indicates the start of a sequence\n",
+    "\n",
+    "imbd.load_data(start_char=1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Explore the dataset word index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/imdb_word_index.json\n",
+      "1646592/1641221 [==============================] - 0s 0us/step\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Load the imdb word index using get_word_index()\n",
+    "\n",
+    "imdb_word_index = imdb.get_word_index()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# View the word index as a dictionary,\n",
+    "# accounting for index_from.\n",
+    "\n",
+    "index_from = 3\n",
+    "imdb_word_index = {key: value + index_from for key, value in imdb_word_index.items()}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "52256"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Retrieve a specific word's index\n",
+    "\n",
+    "imdb_word_index['simpsonian']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['this',\n",
+       " 'film',\n",
+       " 'was',\n",
+       " 'just',\n",
+       " 'brilliant',\n",
+       " 'casting',\n",
+       " 'location',\n",
+       " 'scenery',\n",
+       " 'story',\n",
+       " 'direction',\n",
+       " \"everyone's\",\n",
+       " 'really',\n",
+       " 'suited',\n",
+       " 'the',\n",
+       " 'part',\n",
+       " 'they',\n",
+       " 'played',\n",
+       " 'and',\n",
+       " 'you',\n",
+       " 'could',\n",
+       " 'just',\n",
+       " 'imagine',\n",
+       " 'being',\n",
+       " 'there',\n",
+       " 'robert',\n",
+       " \"redford's\",\n",
+       " 'is',\n",
+       " 'an',\n",
+       " 'amazing',\n",
+       " 'actor',\n",
+       " 'and',\n",
+       " 'now',\n",
+       " 'the',\n",
+       " 'same',\n",
+       " 'being',\n",
+       " 'director',\n",
+       " \"norman's\",\n",
+       " 'father',\n",
+       " 'came',\n",
+       " 'from',\n",
+       " 'the',\n",
+       " 'same',\n",
+       " 'scottish',\n",
+       " 'island',\n",
+       " 'as',\n",
+       " 'myself',\n",
+       " 'so',\n",
+       " 'i',\n",
+       " 'loved',\n",
+       " 'the',\n",
+       " 'fact',\n",
+       " 'there',\n",
+       " 'was',\n",
+       " 'a',\n",
+       " 'real',\n",
+       " 'connection',\n",
+       " 'with',\n",
+       " 'this',\n",
+       " 'film',\n",
+       " 'the',\n",
+       " 'witty',\n",
+       " 'remarks',\n",
+       " 'throughout',\n",
+       " 'the',\n",
+       " 'film',\n",
+       " 'were',\n",
+       " 'great',\n",
+       " 'it',\n",
+       " 'was',\n",
+       " 'just',\n",
+       " 'brilliant',\n",
+       " 'so',\n",
+       " 'much',\n",
+       " 'that',\n",
+       " 'i',\n",
+       " 'bought',\n",
+       " 'the',\n",
+       " 'film',\n",
+       " 'as',\n",
+       " 'soon',\n",
+       " 'as',\n",
+       " 'it',\n",
+       " 'was',\n",
+       " 'released',\n",
+       " 'for',\n",
+       " 'retail',\n",
+       " 'and',\n",
+       " 'would',\n",
+       " 'recommend',\n",
+       " 'it',\n",
+       " 'to',\n",
+       " 'everyone',\n",
+       " 'to',\n",
+       " 'watch',\n",
+       " 'and',\n",
+       " 'the',\n",
+       " 'fly',\n",
+       " 'fishing',\n",
+       " 'was',\n",
+       " 'amazing',\n",
+       " 'really',\n",
+       " 'cried',\n",
+       " 'at',\n",
+       " 'the',\n",
+       " 'end',\n",
+       " 'it',\n",
+       " 'was',\n",
+       " 'so',\n",
+       " 'sad',\n",
+       " 'and',\n",
+       " 'you',\n",
+       " 'know',\n",
+       " 'what',\n",
+       " 'they',\n",
+       " 'say',\n",
+       " 'if',\n",
+       " 'you',\n",
+       " 'cry',\n",
+       " 'at',\n",
+       " 'a',\n",
+       " 'film',\n",
+       " 'it',\n",
+       " 'must',\n",
+       " 'have',\n",
+       " 'been',\n",
+       " 'good',\n",
+       " 'and',\n",
+       " 'this',\n",
+       " 'definitely',\n",
+       " 'was',\n",
+       " 'also',\n",
+       " 'congratulations',\n",
+       " 'to',\n",
+       " 'the',\n",
+       " 'two',\n",
+       " 'little',\n",
+       " \"boy's\",\n",
+       " 'that',\n",
+       " 'played',\n",
+       " 'the',\n",
+       " \"part's\",\n",
+       " 'of',\n",
+       " 'norman',\n",
+       " 'and',\n",
+       " 'paul',\n",
+       " 'they',\n",
+       " 'were',\n",
+       " 'just',\n",
+       " 'brilliant',\n",
+       " 'children',\n",
+       " 'are',\n",
+       " 'often',\n",
+       " 'left',\n",
+       " 'out',\n",
+       " 'of',\n",
+       " 'the',\n",
+       " 'praising',\n",
+       " 'list',\n",
+       " 'i',\n",
+       " 'think',\n",
+       " 'because',\n",
+       " 'the',\n",
+       " 'stars',\n",
+       " 'that',\n",
+       " 'play',\n",
+       " 'them',\n",
+       " 'all',\n",
+       " 'grown',\n",
+       " 'up',\n",
+       " 'are',\n",
+       " 'such',\n",
+       " 'a',\n",
+       " 'big',\n",
+       " 'profile',\n",
+       " 'for',\n",
+       " 'the',\n",
+       " 'whole',\n",
+       " 'film',\n",
+       " 'but',\n",
+       " 'these',\n",
+       " 'children',\n",
+       " 'are',\n",
+       " 'amazing',\n",
+       " 'and',\n",
+       " 'should',\n",
+       " 'be',\n",
+       " 'praised',\n",
+       " 'for',\n",
+       " 'what',\n",
+       " 'they',\n",
+       " 'have',\n",
+       " 'done',\n",
+       " \"don't\",\n",
+       " 'you',\n",
+       " 'think',\n",
+       " 'the',\n",
+       " 'whole',\n",
+       " 'story',\n",
+       " 'was',\n",
+       " 'so',\n",
+       " 'lovely',\n",
+       " 'because',\n",
+       " 'it',\n",
+       " 'was',\n",
+       " 'true',\n",
+       " 'and',\n",
+       " 'was',\n",
+       " \"someone's\",\n",
+       " 'life',\n",
+       " 'after',\n",
+       " 'all',\n",
+       " 'that',\n",
+       " 'was',\n",
+       " 'shared',\n",
+       " 'with',\n",
+       " 'us',\n",
+       " 'all']"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# View an input sentence\n",
+    "\n",
+    "inv_imdb_word_index = {value: key for key, value in imdb_word_index.items()}\n",
+    "[inv_imdb_word_index[index] for index in x_train[0] if index > index_from]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Get the sentiment value\n",
+    "\n",
+    "y_train[0]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "<a id=\"coding_tutorial_2\"></a>\n",
+    "## Padding and Masking Sequence Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the imdb data set\n",
+    "\n",
+    "import tensorflow.keras.datasets.imdb as imdb\n",
+    "(x_train, y_train), (x_test, y_test) = imdb.load_data()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Preprocess the data with padding"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(25000,)"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect the input data shape\n",
+    "\n",
+    "x_train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Pad the inputs to the maximum length using maxlen\n",
+    "\n",
+    "padded_x_train = tf.keras.preprocessing.sequence.pad_sequences(x_train, maxlen=300, padding='post', truncating='pre')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(25000, 300)"
+      ]
+     },
+     "execution_count": 19,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect the output data shape\n",
+    "\n",
+    "padded_x_train.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Create a Masking layer"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Import numpy \n",
+    "\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Masking expects to see (batch, sequence, features)\n",
+    "# Create a dummy feature dimension using expand_dims\n",
+    "\n",
+    "padded_x_train = np.expand_dims(padded_x_train, -1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create a Masking layer \n",
+    "\n",
+    "tf_x_train = tf.convert_to_tensor(padded_x_train, dtype = 'float32')\n",
+    "masking_layer = tf.keras.layers.Masking(mask_value=0.0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Pass tf_x_train to it\n",
+    "\n",
+    "masked_x_train = masking_layer(tf_x_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<tf.Tensor: id=1, shape=(25000, 300, 1), dtype=float32, numpy=\n",
+       "array([[[1.000e+00],\n",
+       "        [1.400e+01],\n",
+       "        [2.200e+01],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]],\n",
+       "\n",
+       "       [[1.000e+00],\n",
+       "        [1.940e+02],\n",
+       "        [1.153e+03],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]],\n",
+       "\n",
+       "       [[1.000e+00],\n",
+       "        [1.400e+01],\n",
+       "        [4.700e+01],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]],\n",
+       "\n",
+       "       ...,\n",
+       "\n",
+       "       [[1.000e+00],\n",
+       "        [1.100e+01],\n",
+       "        [6.000e+00],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]],\n",
+       "\n",
+       "       [[1.000e+00],\n",
+       "        [1.446e+03],\n",
+       "        [7.079e+03],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]],\n",
+       "\n",
+       "       [[1.000e+00],\n",
+       "        [1.700e+01],\n",
+       "        [6.000e+00],\n",
+       "        ...,\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00],\n",
+       "        [0.000e+00]]], dtype=float32)>"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Look at the dataset\n",
+    "\n",
+    "tf_x_train"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<tf.Tensor: id=9, shape=(25000, 300), dtype=bool, numpy=\n",
+       "array([[ True,  True,  True, ..., False, False, False],\n",
+       "       [ True,  True,  True, ..., False, False, False],\n",
+       "       [ True,  True,  True, ..., False, False, False],\n",
+       "       ...,\n",
+       "       [ True,  True,  True, ..., False, False, False],\n",
+       "       [ True,  True,  True, ..., False, False, False],\n",
+       "       [ True,  True,  True, ..., False, False, False]])>"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Look at the ._keras_mask for the dataset\n",
+    "\n",
+    "masked_x_train._keras_mask"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "***\n",
+    "<a id=\"coding_tutorial_3\"></a>\n",
+    "## The Embedding layer"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Create and apply an `Embedding` layer"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create an embedding layer using layers.Embedding\n",
+    "# Specify input_dim, output_dim, input_length\n",
+    "\n",
+    "embedding_layer = tf.keras.layers.Embedding(input_dim=501, output_dim=16)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<tf.Tensor: id=25, shape=(1, 4, 1, 16), dtype=float32, numpy=\n",
+       "array([[[[-0.02552643, -0.02498781, -0.02953786,  0.04828257,\n",
+       "          -0.01328895,  0.01301292,  0.04365467, -0.0171684 ,\n",
+       "           0.04181281, -0.00772824,  0.03405556, -0.02558487,\n",
+       "          -0.04792639, -0.04627117,  0.0367108 , -0.03377417]],\n",
+       "\n",
+       "        [[-0.04991516,  0.01997725,  0.04231187,  0.04547793,\n",
+       "           0.03354812, -0.00849564,  0.03774995, -0.04855166,\n",
+       "          -0.03230216, -0.00624982,  0.04780202, -0.03803539,\n",
+       "           0.0471409 , -0.00336708, -0.04842339,  0.01794055]],\n",
+       "\n",
+       "        [[ 0.03575441,  0.03476007,  0.00903095, -0.04461352,\n",
+       "           0.02964121,  0.03873822, -0.01407914,  0.03304677,\n",
+       "          -0.01008136,  0.03387021,  0.00651164, -0.04461529,\n",
+       "          -0.01049381,  0.01868904,  0.03176811,  0.01672376]],\n",
+       "\n",
+       "        [[-0.03315469, -0.03887882,  0.03002225, -0.04430413,\n",
+       "           0.03221275,  0.01399055, -0.04655677,  0.03273818,\n",
+       "          -0.04599613,  0.04411033,  0.00363515,  0.02589505,\n",
+       "           0.02432381, -0.00870336, -0.02182944, -0.00227622]]]],\n",
+       "      dtype=float32)>"
+      ]
+     },
+     "execution_count": 31,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect an Embedding layer output for a fixed input\n",
+    "# Expects an input of shape (batch, sequence, feature)\n",
+    "\n",
+    "sequence_of_indicies = tf.constant([[[0],[1],[5],[500]]])\n",
+    "sequence_of_embeddings = embedding_layer(sequence_of_indicies)\n",
+    "sequence_of_embeddings"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[-0.02552643, -0.02498781, -0.02953786, ..., -0.04627117,\n",
+       "         0.0367108 , -0.03377417],\n",
+       "       [-0.04991516,  0.01997725,  0.04231187, ..., -0.00336708,\n",
+       "        -0.04842339,  0.01794055],\n",
+       "       [ 0.01546491,  0.02799045, -0.03469099, ...,  0.0350536 ,\n",
+       "        -0.03981413,  0.01551299],\n",
+       "       ...,\n",
+       "       [ 0.04702074,  0.00397241,  0.00160094, ..., -0.04034628,\n",
+       "        -0.02734065, -0.0215379 ],\n",
+       "       [-0.02138075,  0.00800116, -0.04208765, ..., -0.02948567,\n",
+       "         0.03872717, -0.02104722],\n",
+       "       [-0.03315469, -0.03887882,  0.03002225, ..., -0.00870336,\n",
+       "        -0.02182944, -0.00227622]], dtype=float32)"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Inspect the Embedding layer weights using get_weights()\n",
+    "\n",
+    "embedding_layer.get_weights()[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([-0.03738116, -0.01135204, -0.02682352, -0.01663904,  0.00913797,\n",
+       "        0.01580978,  0.03643261, -0.03401192, -0.02980736,  0.04456768,\n",
+       "       -0.01004702,  0.03680516, -0.0168304 , -0.00350054,  0.03882556,\n",
+       "       -0.01102346], dtype=float32)"
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Get the embedding for the 14th index\n",
+    "\n",
+    "embedding_layer.get_weights()[0][14,:]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Create and apply an `Embedding` layer that uses `mask_zero=True`"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create a layer that uses the mask_zero kwarg\n",
+    "\n",
+    "masking_embedding_layer = tf.keras.layers.Embedding(input_dim = 501, output_dim = 16, mask_zero=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<tf.Tensor: id=47, shape=(1, 4, 1), dtype=bool, numpy=\n",
+       "array([[[False],\n",
+       "        [ True],\n",
+       "        [ True],\n",
+       "        [ True]]])>"
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Apply this layer to the sequence and see the _keras_mask property\n",
+    "\n",
+    "masked_sequence_of_embeddings = masking_embedding_layer(sequence_of_indicies)\n",
+    "masked_sequence_of_embeddings._keras_mask"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "<a id=\"coding_tutorial_4\"></a>\n",
+    "## The Embedding Projector"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Load and preprocess the IMDb data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to load and preprocess the IMDB dataset\n",
+    "\n",
+    "def get_and_pad_imdb_dataset(num_words=10000, maxlen=None, index_from=2):\n",
+    "    from tensorflow.keras.datasets import imdb\n",
+    "\n",
+    "    # Load the reviews\n",
+    "    (x_train, y_train), (x_test, y_test) = imdb.load_data(path='imdb.npz',\n",
+    "                                                          num_words=num_words,\n",
+    "                                                          skip_top=0,\n",
+    "                                                          maxlen=maxlen,\n",
+    "                                                          start_char=1,\n",
+    "                                                          oov_char=2,\n",
+    "                                                          index_from=index_from)\n",
+    "\n",
+    "    x_train = tf.keras.preprocessing.sequence.pad_sequences(x_train,\n",
+    "                                                        maxlen=None,\n",
+    "                                                        padding='pre',\n",
+    "                                                        truncating='pre',\n",
+    "                                                        value=0)\n",
+    "    \n",
+    "    x_test = tf.keras.preprocessing.sequence.pad_sequences(x_test,\n",
+    "                                                           maxlen=None,\n",
+    "                                                           padding='pre',\n",
+    "                                                           truncating='pre',\n",
+    "                                                           value=0)\n",
+    "    return (x_train, y_train), (x_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the dataset\n",
+    "\n",
+    "(x_train, y_train), (x_test, y_test) = get_and_pad_imdb_dataset()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to get the dataset word index\n",
+    "\n",
+    "def get_imdb_word_index(num_words=10000, index_from=2):\n",
+    "    imdb_word_index = tf.keras.datasets.imdb.get_word_index(\n",
+    "                                        path='imdb_word_index.json')\n",
+    "    imdb_word_index = {key: value + index_from for\n",
+    "                       key, value in imdb_word_index.items() if value <= num_words-index_from}\n",
+    "    return imdb_word_index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the word index\n",
+    "\n",
+    "imdb_word_index = get_imdb_word_index()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Swap the keys and values of the word index\n",
+    "\n",
+    "inv_imdb_word_index = {value: key for key, value in imdb_word_index.items()}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['i',\n",
+       " 'am',\n",
+       " 'a',\n",
+       " 'great',\n",
+       " 'fan',\n",
+       " 'of',\n",
+       " 'david',\n",
+       " 'lynch',\n",
+       " 'and',\n",
+       " 'have',\n",
+       " 'everything',\n",
+       " 'that',\n",
+       " \"he's\",\n",
+       " 'made',\n",
+       " 'on',\n",
+       " 'dvd',\n",
+       " 'except',\n",
+       " 'for',\n",
+       " 'hotel',\n",
+       " 'room',\n",
+       " 'the',\n",
+       " '2',\n",
+       " 'hour',\n",
+       " 'twin',\n",
+       " 'peaks',\n",
+       " 'movie',\n",
+       " 'so',\n",
+       " 'when',\n",
+       " 'i',\n",
+       " 'found',\n",
+       " 'out',\n",
+       " 'about',\n",
+       " 'this',\n",
+       " 'i',\n",
+       " 'immediately',\n",
+       " 'grabbed',\n",
+       " 'it',\n",
+       " 'and',\n",
+       " 'and',\n",
+       " 'what',\n",
+       " 'is',\n",
+       " 'this',\n",
+       " \"it's\",\n",
+       " 'a',\n",
+       " 'bunch',\n",
+       " 'of',\n",
+       " 'drawn',\n",
+       " 'black',\n",
+       " 'and',\n",
+       " 'white',\n",
+       " 'cartoons',\n",
+       " 'that',\n",
+       " 'are',\n",
+       " 'loud',\n",
+       " 'and',\n",
+       " 'foul',\n",
+       " 'mouthed',\n",
+       " 'and',\n",
+       " 'unfunny',\n",
+       " 'maybe',\n",
+       " 'i',\n",
+       " \"don't\",\n",
+       " 'know',\n",
+       " \"what's\",\n",
+       " 'good',\n",
+       " 'but',\n",
+       " 'maybe',\n",
+       " 'this',\n",
+       " 'is',\n",
+       " 'just',\n",
+       " 'a',\n",
+       " 'bunch',\n",
+       " 'of',\n",
+       " 'crap',\n",
+       " 'that',\n",
+       " 'was',\n",
+       " 'on',\n",
+       " 'the',\n",
+       " 'public',\n",
+       " 'under',\n",
+       " 'the',\n",
+       " 'name',\n",
+       " 'of',\n",
+       " 'david',\n",
+       " 'lynch',\n",
+       " 'to',\n",
+       " 'make',\n",
+       " 'a',\n",
+       " 'few',\n",
+       " 'bucks',\n",
+       " 'too',\n",
+       " 'let',\n",
+       " 'me',\n",
+       " 'make',\n",
+       " 'it',\n",
+       " 'clear',\n",
+       " 'that',\n",
+       " 'i',\n",
+       " \"didn't\",\n",
+       " 'care',\n",
+       " 'about',\n",
+       " 'the',\n",
+       " 'foul',\n",
+       " 'language',\n",
+       " 'part',\n",
+       " 'but',\n",
+       " 'had',\n",
+       " 'to',\n",
+       " 'keep',\n",
+       " 'the',\n",
+       " 'sound',\n",
+       " 'because',\n",
+       " 'my',\n",
+       " 'neighbors',\n",
+       " 'might',\n",
+       " 'have',\n",
+       " 'all',\n",
+       " 'in',\n",
+       " 'all',\n",
+       " 'this',\n",
+       " 'is',\n",
+       " 'a',\n",
+       " 'highly',\n",
+       " 'disappointing',\n",
+       " 'release',\n",
+       " 'and',\n",
+       " 'may',\n",
+       " 'well',\n",
+       " 'have',\n",
+       " 'just',\n",
+       " 'been',\n",
+       " 'left',\n",
+       " 'in',\n",
+       " 'the',\n",
+       " 'box',\n",
+       " 'set',\n",
+       " 'as',\n",
+       " 'a',\n",
+       " 'curiosity',\n",
+       " 'i',\n",
+       " 'highly',\n",
+       " 'recommend',\n",
+       " 'you',\n",
+       " \"don't\",\n",
+       " 'spend',\n",
+       " 'your',\n",
+       " 'money',\n",
+       " 'on',\n",
+       " 'this',\n",
+       " '2',\n",
+       " 'out',\n",
+       " 'of',\n",
+       " '10']"
+      ]
+     },
+     "execution_count": 43,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# View the first dataset example sentence\n",
+    "\n",
+    "[inv_imdb_word_index[index] for index in x_train[100] if index > 2]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Build an Embedding layer into a model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the maximum token value\n",
+    "\n",
+    "max_index_value = max(imdb_word_index.values())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Specify an embedding dimension\n",
+    "\n",
+    "embedding_dim = 16"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 46,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Build a model using Sequential:\n",
+    "#     1. Embedding layer\n",
+    "#     2. GlobalAveragePooling1D\n",
+    "#     3. Dense\n",
+    "\n",
+    "model = tf.keras.Sequential([\n",
+    "    tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim, mask_zero=False),\n",
+    "    tf.keras.layers.GlobalAveragePooling1D(),\n",
+    "    tf.keras.layers.Dense(units=1, activation='sigmoid')\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Functional API refresher: use the Model to build the same model\n",
+    "\n",
+    "review_sequence = tf.keras.Input((None, ))\n",
+    "embedding_sequence = tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim)(review_sequence)\n",
+    "average_embedding = tf.keras.layers.GlobalAveragePooling1D()(embedding_sequence)\n",
+    "positive_probability = tf.keras.layers.Dense(units=1, activation='sigmoid')(average_embedding)\n",
+    "\n",
+    "model = tf.keras.Model(inputs=review_sequence, outputs=positive_probability)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Model: \"model\"\n",
+      "_________________________________________________________________\n",
+      "Layer (type)                 Output Shape              Param #   \n",
+      "=================================================================\n",
+      "input_1 (InputLayer)         [(None, None)]            0         \n",
+      "_________________________________________________________________\n",
+      "embedding_3 (Embedding)      (None, None, 16)          160016    \n",
+      "_________________________________________________________________\n",
+      "global_average_pooling1d_1 ( (None, 16)                0         \n",
+      "_________________________________________________________________\n",
+      "dense_1 (Dense)              (None, 1)                 17        \n",
+      "=================================================================\n",
+      "Total params: 160,033\n",
+      "Trainable params: 160,033\n",
+      "Non-trainable params: 0\n",
+      "_________________________________________________________________\n"
+     ]
+    }
+   ],
+   "source": [
+    "model.summary()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Compile, train, and evaluate the model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compile the model with a binary cross-entropy loss\n",
+    "\n",
+    "model.compile(loss='binary_crossentropy', metrics=['accuracy'], optimizer='adam')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train on 25000 samples, validate on 25000 samples\n",
+      "Epoch 1/5\n",
+      "25000/25000 [==============================] - 35s 1ms/sample - loss: 0.6901 - accuracy: 0.5560 - val_loss: 0.0175 - val_accuracy: 0.7156\n",
+      "Epoch 2/5\n",
+      "25000/25000 [==============================] - 32s 1ms/sample - loss: 0.6718 - accuracy: 0.6714 - val_loss: 0.0167 - val_accuracy: 0.7094\n",
+      "Epoch 3/5\n",
+      "25000/25000 [==============================] - 32s 1ms/sample - loss: 0.6306 - accuracy: 0.7496 - val_loss: 0.0155 - val_accuracy: 0.7547\n",
+      "Epoch 4/5\n",
+      "25000/25000 [==============================] - 31s 1ms/sample - loss: 0.5800 - accuracy: 0.7888 - val_loss: 0.0142 - val_accuracy: 0.7859\n",
+      "Epoch 5/5\n",
+      "25000/25000 [==============================] - 32s 1ms/sample - loss: 0.5317 - accuracy: 0.8171 - val_loss: 0.0132 - val_accuracy: 0.7922\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Train the model using .fit(), savng its history\n",
+    "\n",
+    "history = model.fit(x_train, y_train, epochs = 5, batch_size=32, validation_data=(x_test,y_test), validation_steps=20)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "iVBORw0KGgoAAAANSUhEUgAAA0cAAAFRCAYAAAC/qtYsAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAADl0RVh0U29mdHdhcmUAbWF0cGxvdGxpYiB2ZXJzaW9uIDMuMC4zLCBodHRwOi8vbWF0cGxvdGxpYi5vcmcvnQurowAAIABJREFUeJzs3Xl8VPW9//H3mZlMZrKRZEKIEAyyhkWrLIK4FYiogMutF1utIuK+1+tW/dkqbfGigru2VhCsepUHlnp7XSnV1l1RcQFEFgFB1iQgJJlJMnO+vz9mMpnJxoDMJODr+Xj4mDn753yh986b7/d8j2WMMQIAAACAHzlHexcAAAAAAB0B4QgAAAAARDgCAAAAAEmEIwAAAACQRDgCAAAAAEmEIwAAAACQRDgCgKRZsWKFLMvSxx9/vFfHFRUVacaMGUmqKnVScR+BQECWZemFF17Yq+v+4he/0IQJE37w9V977TVZlqXy8vIffC4AQPtztXcBANBeLMtqc3tJSYnWrVu3z+fv06ePNm/erIKCgr067ssvv1RmZuY+X/fHLhntFwwGlZaWpueee06/+MUvoutHjx6tzZs3y+fz7dfrAQDaB+EIwI/W5s2bo98/+ugjnXHGGfroo4/UvXt3SZLT6WzxuLq6Ornd7j2e3+l0qqioaK/r6ty5814fg0apbD+3271Pf8YHk0T/9wAABwKG1QH40SoqKor+l5+fLyn8w7phXcOP7KKiIk2dOlWXXnqp8vPzNWbMGEnSjBkzdMQRRygzM1Ndu3bVeeedp23btkXP33RYXcPyggULdOqppyojI0O9e/fWvHnzmtUVOyysqKhI06ZN01VXXaXc3FwVFRXp1ltvlW3b0X2qq6s1ZcoU5eTkKD8/X9dee61uuOEGDRo0qM022NM9NAwbe/PNN3XsscfK6/Xq8MMP15tvvhl3nk8++UTDhw9Xenq6SktL9eKLL7Z53YqKCqWnp2vBggVx69etWyeHw6F//etfkqSnnnpKw4YNU05Ojjp37qzTTz9da9asafPcTdtv+/btOuuss5SRkaGioiL97ne/a3bMK6+8ohNOOEH5+fnKzc3V6NGj9emnn0a3FxcXS5LOOeccWZYlj8cT1z6xw+reeecdHXfccfJ4PMrPz9ekSZNUUVER3f7rX/9agwYN0vz589W3b19lZWWprKxM69evb/O+9lSjJO3atUtXX321unXrpvT0dPXs2TOuLTZv3qxJkyapsLBQHo9HpaWleuaZZ1q9l2AwKMuy9Pzzz0tq/Ds8b948jR07VhkZGfrd736n+vp6XXTRRerZs6e8Xq969eqlO+64Q/X19XH1vfbaazr22GOVkZGh3NxcjRo1St9++61effVVud1ubd26NW7/xx9/XHl5efL7/W22DQDsL4QjAEjAzJkzVVJSog8//FB//vOfJUkOh0MPPPCAli5dqvnz52vlypU6//zz93iuW265RZdccom++OILnXbaaZo0adIefxjPnDlTPXv21OLFi3XvvffqnnvuiQtV119/vV5//XU9//zzeu+995SWlqZZs2btsZZE7+HGG2/UnXfeqc8//1wDBw7UxIkTVVVVJUnavXu3Tj31VB1yyCFavHixZs2apd///vfauXNnq9f1+XwaN26cnnrqqbj1zzzzjA499FCdeOKJksK9ElOnTtWSJUv02muvqb6+XqeffrqCweAe763BpEmTtGzZMr366qtatGiRli5dqldeeSVun+rqav3qV7/Shx9+qHfeeUfFxcU65ZRT9P3330uSlixZIkn605/+pM2bN7f657VhwwadfPLJ6t27tz7++GP97W9/0+LFi+OG4knS+vXrNXfuXM2bN09vvfWWtmzZoksvvbTN+9hTjbZt65RTTtHChQv1+OOP66uvvtLs2bOjwb+qqkrHH3+8VqxYoeeff17Lly/X/fffr/T09ITbssHNN9+sKVOmaNmyZbr44osVCoVUXFysefPm6auvvtKMGTP02GOPxQWzV155RePHj9fIkSP1wQcf6L333tM555yj+vp6nXzyyerWrZvmzp0bd51Zs2bpvPPOk9fr3esaAWCfGACAefvtt40ks3bt2mbbunTpYsaNG7fHc7z33ntGkikvLzfGGPPVV18ZSWbx4sVxy48++mj0mNraWuN2u83cuXPjrnfvvffGLU+cODHuWieeeKKZPHmyMcaYyspK43K5zDPPPBO3z5FHHmkGDhy4x7rbuodXX33VSDIvv/xydJ+1a9caSeZf//qXMcaYhx9+2HTq1Mns2rUrus/ixYuNpLj7aOpvf/ubSUtLM9u3b4+u69u3r7n99ttbPWbTpk1Gkvn444+NMcb4/X4jycyfPz+6T2z7ffnll0aSeeutt6Lba2pqTOfOnc348eNbvU59fb3JyMgwL7zwQnRZknnuuefi9mton4Z7uPHGG81hhx1m6uvro/t88MEHRpL58MMPjTHG3HLLLcbtdpvKysroPnPmzDEul8sEg8FWa9pTjS+99JKRZL744osW93/kkUdMZmam2bJlS4vbm95LS/fd8Hf4nnvu2WN9d911lxk0aFB0eejQoeass85qdf9p06aZ3r17G9u2jTHGfPbZZ23eDwAkAz1HAJCAo48+utm6RYsW6aSTTlL37t2VnZ2tsrIySdpjL9CRRx4Z/e52u1VQUNBsOFFbx0hSt27dosesXLlSwWBQI0aMiNun6XJLEr2H2Ot369ZNkqLXX758uQ4//HBlZ2dH9xk6dOge/7V//PjxysnJ0XPPPSdJ+vDDD7Vy5UpNmjQpus8nn3yiM844Qz169FB2drb69OnTYn2tWb58uRwOR1xbeL1eDR48OG6/VatW6dxzz1WvXr2Uk5Oj3Nxc+f3+hK/TYNmyZRo5cqRcrsZHeo8++mh5PB4tW7Ysuq6kpER5eXnR5W7duikYDMYNv2tqTzV+8sknOuSQQ3T44Ye3ePwnn3yiI444Ql26dNmre2pJS/97eOyxxzRs2DAVFhYqKytLU6dOjdZmjNGSJUs0duzYVs85ZcoUrV+/Pjqk8oknntDw4cNbvR8ASAbCEQAkoOnsZ6tXr9aECRPUr18/zZs3Tx9//LHmz58vKTwUrC1NH163LCvu+aF9PWZPs+81tTf3EHv9hus0XN8Y0+K1jTFtXj8tLU3nnHOO/vKXv0iS/vKXv+iYY46JBqDvv/9eJ510kjwej5566iktXrxY7733Xov1tWZPNTQ49dRTtXXrVv3pT3/SBx98oM8++0ydOnVK+DqxWvtziF3f0p+npDb/HiRS457+DrS13eEI/ySIbbOmzww1aPq/h6efflr/9V//pfPPP1+vvvqqlixZoltuuaVZ+7V1/aKiIp1xxhl64okn5Pf79eyzz+5xqCEA7G+EIwDYBx9++KHq6+v1wAMPaOTIkerXr5+2bNnSLrX07dtXLpdL77//ftz6Dz74oM3j9tc9DBw4UF988UX0GSQp3EsRCAT2eOykSZP08ccf64svvtC8efN0wQUXRLctXbpUO3bs0PTp03XiiSeqtLR0r98nNHDgQNm2HdcWgUAgbiKD7777TmvWrNHtt9+uk046SQMGDJDD4Yh7ZsrpdMrpdCoUCu3xeu+++27cM1EfffSRAoGABg4cuFe1x0qkxiFDhmjTpk368ssvWzzHkCFD9Pnnn7faS1lYWChJ2rRpU3Rd0wkfWvPWW29p+PDhuvbaazVkyBD16dNHa9eujW63LEtHHXWUXn/99TbPc9lll2nBggV6/PHHZdu2fv7znyd0fQDYXwhHALAP+vbtK9u2df/992vt2rX661//qv/+7/9ul1ry8vJ04YUX6pZbbtGrr76qr7/+WjfddJPWrl3b5r/U7697uOCCC5SWlqZJkybpyy+/1LvvvqvLL788oQf9hw0bpgEDBuiCCy5QVVVV3I/hww47TGlpaXrooYf0zTffaOHChbrpppv2qrZBgwZp7Nixuuyyy/TWW29p2bJlmjx5clxwKywsVG5urh5//HGtWrVK7777rs4///zojHRS+Md9SUmJ3njjDW3evLnV4W/XXXedtm7dqosvvljLli3Tv//9b1144YUqKyvTsGHD9qr2WInUeMopp+joo4/WWWedpZdeeklr167V22+/rTlz5khSdJa60047TW+88YbWrl2rf/zjH9EX6Pbv319du3bVb3/7W3399df697//rZtvvjmh+vr166dPP/1UL7/8slavXq0ZM2bopZdeitvnt7/9rRYsWKCbbrpJX375pVasWKHZs2fHzT44ZswYde/eXbfccovOPfdc3vcFIOUIRwCwD4YNG6b77rtPDz74oAYMGKCHH35Y999/f7vVc//99+ukk07S2WefrREjRqi2tlbnnntu3I/npvbXPWRnZ+uVV17Rxo0bNXToUE2ePFm33nqrcnNzEzp+0qRJ+uyzz3TaaafFHdO1a1c99dRT+vvf/64BAwbotttu26f6nn76aZWWluqUU07R6NGj1a9fP40bNy66PS0tTfPnz9fSpUt1+OGH65JLLtEtt9zS7MWuDzzwgN555x2VlJREn7tqqri4WK+//rpWrVqlIUOG6D/+4z80dOjQ6FTY+yqRGp1Op15//XWNGTNGF198sUpLSzV58mTt2LFDUvjP6e2331bv3r01ceJE9e/fX9dee61qa2slSenp6Zo3b57Wr1+vI488Ur/61a909913J1TfNddco4kTJ+q8887TkCFD9MUXX+j222+P2+e0007T3//+d/373//WsGHDNGLE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iXAEAAAAAJIIRwAAAAAgiXAEAAAAAJIIRwAAAAAgSXK1dwEAAABAR2eMUSAQkG3bsiyrvcvp8LZu3ara2tqUXc8YI4fDIY/H84P+fAhHAAAAwB4EAgGlpaXJ5eLncyJcLpecTmdKrxkMBhUIBOT1evf5HAyrAwAAAPbAtm2CUQfncrlk2/YPOgfhCAAAANgDhtIdGH7onxPxFwAAAOjgKisr9fOf/1yStH37djmdTuXn50uSXn75Zbnd7j2e4/rrr9dVV12l3r17t7rP3LlzlZOTo5/97Gf7p/ADDOEIAAAA6ODy8/P1j3/8Q5I0c+ZMZWZm6vLLL4/bxxgTnZigJffff/8erzN58uQfXOuBjGF1AAAAQBKYNStkvzJfZs2KpF1j7dq1Gj16tG655RadfPLJ2rp1q26++WadeuqpGjVqVFwgOvPMM7V06VIFg0H1799fd911l/VS0SoAABQTSURBVMrKynTaaaepvLxcknT33XfriSeeiO5/1113afz48Tr++OO1ePFiSVJNTY0uueQSlZWV6corr9Spp56qpUuXNqttxowZGjduXLQ+Y4wkac2aNZo4caLKysp08skna8OGDZKkhx56SGPGjFFZWZmmT5+etDZrCz1HAAAAwF6wn39CZsPatnfy10gb10rGyFiWVHyY5M1odXer+2Fy/OKSfapn5cqVuu+++3T33XdLkm699Vbl5eUpGAxq4sSJGj9+vPr27Rt3zK5duzRixAjddtttuvPOO/X888/r6quvbnZuY4xefvllLVy4UA888ICeffZZPfnkk+rcubOeeOIJLVu2TKecckqLdV100UW68cYbZYzRVVddpf/f3r0HRXndfxx/Lxe5CAILRoVIo4maIDBoVDRpTIQVJdJqW8WaaKcjNkaZqjWlkk5Sp6NJvLbWDowWHDvtNL3kN0kZLzGMDtYmplqLiUkIQRMrtgoqC4i4q1l2f39Yt9ly27C7wOrn9Y88e85z9ux3v3/43ec856moqCAjI4P8/HxWr15NVlYWVqsVh8NBeXk5FRUV7N27l7CwMBobG3sUC0+pOBIRERER8TZLK/znSgkOx63jLoojT3zlK18hLS3NeVxWVsbvf/972traqKuro6ampl1xFBoaSkZGBgCpqakcO3asw7Gzs7MBSElJcV7hOX78OPn5+QCMHTuWMWPGdHju22+/zY4d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Mpk4evQosbGxbNq0iSVLlmAymVi2bJnb7+Mug6Ora2F+4MKFC309Bae4uDiuXLnS19O4Yym+vqcY+55i7HuKse8pxr6l+PpeT2J8/fp153010r2goCBsNluvv29H31N8fLzb5+vKkYiIiIiICCqOREREREREABVHIiIiIiIigIojEREREZFu+flt+ncNT78nFUciIiIiIt0ICAjokw0GxH02m42AAM/KGz0EVkRERESkG6GhoVitVm7cuOHzB5HeCUJCQrp9EK03ORwOAgICCA0N9WicXiuO3nvvPXbv3o3dbiczM9PlwVVw6wPt3r2bkydPEhISwvLlyxk5cmRvTU9EREREpFMGg4GwMO89r+hO569b0vfKsjq73c6uXbv48Y9/zM9//vMOn9x78uRJ6urq2L59O8888wylpaW9MTURERERERGgl4qjM2fOMHToUIYMGUJQUBCPPPIIf//73136nDhxgqlTp2IwGBg9ejStra00Njb2xvRERERERER6pzgym83ExsY6j2NjYzGbze36xMXFddlHRERERETEV3rlnqOOttT73xvZ3OkDcPDgQQ4ePAjAhg0biI+P99IsvaO/zedOo/j6nmLse4qx7ynGvqcY+5bi63uKse/5Y4x75cpRbGwsDQ0NzuOGhgZiYmLa9fniTVsd9QEwmUxs2LCBDRs2+G7CPVRYWNjXU7ijKb6+pxj7nmLse4qx7ynGvqX4+p5i7Hv+GuNeKY7uv/9+Ll68yKVLl7DZbBw9epQJEya49JkwYQJHjhzB4XBQU1NDeHh4h8WRiIiIiIiIL/TKsrrAwEAWL17MSy+9hN1uZ9q0aQwfPpzy8nIAsrKyGDduHJWVlaxYsYIBAwawfPny3piaiIiIiIgI0IvPORo/fjzjx493eS0rK8v5t8FgYMmSJb01HZ8wmUx9PYU7muLre4qx7ynGvqcY+55i7FuKr+8pxr7nrzE2ODraCUFEREREROQu0yv3HImIiIiIiPR3vbas7k5RXFxMZWUlUVFRbN26tV27w+Fg9+7dnDx5kpCQEJYvX87IkSP7YKb+q7sYf/TRR2zatIl77rkHgPT0dObOndvb0/RbV65coaioiKamJgwGAyaTiSeffNKlj/LYM+7EWHnsmZs3b7J27VpsNhttbW1MnjyZ3Nxclz7K455zJ77KYe+w2+0UFhZiNBrb7e6l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\n",
+      "text/plain": [
+       "<Figure size 1008x360 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "# Plot the training and validation accuracy\n",
+    "\n",
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "plt.style.use('ggplot')\n",
+    "\n",
+    "history_dict = history.history\n",
+    "\n",
+    "acc      = history_dict['accuracy']\n",
+    "val_acc  = history_dict['val_accuracy']\n",
+    "loss     = history_dict['loss']\n",
+    "val_loss = history_dict['val_loss']\n",
+    "\n",
+    "epochs = range(1, len(acc) + 1)\n",
+    "\n",
+    "plt.figure(figsize=(14,5))\n",
+    "plt.plot(epochs, acc, marker='.', label='Training acc')\n",
+    "plt.plot(epochs, val_acc, marker='.', label='Validation acc')\n",
+    "plt.title('Training and validation accuracy')\n",
+    "plt.xlabel('Epoch')\n",
+    "plt.ylabel('Classification accuracy')\n",
+    "plt.legend(loc='lower right')\n",
+    "plt.ylim(0, 1);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### The TensorFlow embedding projector\n",
+    "\n",
+    "The Tensorflow embedding projector can be found [here](https://projector.tensorflow.org/)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Retrieve the embedding layer's weights from the trained model\n",
+    "\n",
+    "weights = model.layers[1].get_weights()[0]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "FileNotFoundError",
+     "evalue": "[Errno 2] No such file or directory: 'data/vecs.tsv'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mFileNotFoundError\u001b[0m                         Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-53-07d4ece34681>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m\u001b[0m\n\u001b[1;32m      7\u001b[0m \u001b[0;32mfrom\u001b[0m \u001b[0mos\u001b[0m \u001b[0;32mimport\u001b[0m \u001b[0mpath\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      8\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 9\u001b[0;31m \u001b[0mout_v\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mio\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'data'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'vecs.tsv'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'w'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mencoding\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'utf-8'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     10\u001b[0m \u001b[0mout_m\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mio\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mpath\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'data'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'meta.tsv'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'w'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mencoding\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'utf-8'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     11\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;31mFileNotFoundError\u001b[0m: [Errno 2] No such file or directory: 'data/vecs.tsv'"
+     ]
+    }
+   ],
+   "source": [
+    "# Save the word Embeddings to tsv files\n",
+    "# Two files: \n",
+    "#     one contains the embedding labels (meta.tsv),\n",
+    "#     one contains the embeddings (vecs.tsv)\n",
+    "\n",
+    "import io\n",
+    "from os import path\n",
+    "\n",
+    "out_v = io.open(path.join('data', 'vecs.tsv'), 'w', encoding='utf-8')\n",
+    "out_m = io.open(path.join('data', 'meta.tsv'), 'w', encoding='utf-8')\n",
+    "\n",
+    "k = 0\n",
+    "\n",
+    "for word, token in word_index.items():\n",
+    "    if k != 0:\n",
+    "        out_m.write('\\n')\n",
+    "        out_v.write('\\n')\n",
+    "    \n",
+    "    out_v.write('\\t'.join([str(x) for x in weights[token]]))\n",
+    "    out_m.write(word)\n",
+    "    k += 1\n",
+    "    \n",
+    "out_v.close()\n",
+    "out_m.close()\n",
+    "# beware large collections of embeddings!"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "<a id=\"coding_tutorial_5\"></a>\n",
+    "## Recurrent neural network layers"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Initialize and pass an input to a SimpleRNN layer"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create a SimpleRNN layer and test it\n",
+    "\n",
+    "simplernn_layer = tf.keras.layers.SimpleRNN(units=16)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<tf.Tensor: id=13282, shape=(1, 16), dtype=float32, numpy=\n",
+       "array([[-0.9805373, -0.9999996, -1.       ,  1.       , -1.       ,\n",
+       "         1.       , -1.       ,  1.       ,  1.       , -1.       ,\n",
+       "         1.       , -1.       ,  1.       ,  1.       , -0.9068716,\n",
+       "        -1.       ]], dtype=float32)>"
+      ]
+     },
+     "execution_count": 56,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Note that only the final cell output is returned\n",
+    "\n",
+    "sequence = tf.constant([[[1., 1.], [2., 2.], [56., -100.]]])\n",
+    "layer_output = simplernn_layer(sequence)\n",
+    "layer_output"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Load and transform the IMDB review sentiment dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 57,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to load and preprocess the IMDB dataset\n",
+    "\n",
+    "def get_and_pad_imdb_dataset(num_words=10000, maxlen=None, index_from=2):\n",
+    "    from tensorflow.keras.datasets import imdb\n",
+    "\n",
+    "    # Load the reviews\n",
+    "    (x_train, y_train), (x_test, y_test) = imdb.load_data(path='imdb.npz',\n",
+    "                                                          num_words=num_words,\n",
+    "                                                          skip_top=0,\n",
+    "                                                          maxlen=maxlen,\n",
+    "                                                          start_char=1,\n",
+    "                                                          oov_char=2,\n",
+    "                                                          index_from=index_from)\n",
+    "\n",
+    "    x_train = tf.keras.preprocessing.sequence.pad_sequences(x_train,\n",
+    "                                                        maxlen=None,\n",
+    "                                                        padding='pre',\n",
+    "                                                        truncating='pre',\n",
+    "                                                        value=0)\n",
+    "    \n",
+    "    x_test = tf.keras.preprocessing.sequence.pad_sequences(x_test,\n",
+    "                                                           maxlen=None,\n",
+    "                                                           padding='pre',\n",
+    "                                                           truncating='pre',\n",
+    "                                                           value=0)\n",
+    "    return (x_train, y_train), (x_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the dataset\n",
+    "\n",
+    "(x_train, y_train), (x_test, y_test) = get_and_pad_imdb_dataset(maxlen=250)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 59,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to get the dataset word index\n",
+    "\n",
+    "def get_imdb_word_index(num_words=10000, index_from=2):\n",
+    "    imdb_word_index = tf.keras.datasets.imdb.get_word_index(\n",
+    "                                        path='imdb_word_index.json')\n",
+    "    imdb_word_index = {key: value + index_from for\n",
+    "                       key, value in imdb_word_index.items() if value <= num_words-index_from}\n",
+    "    return imdb_word_index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the word index using get_imdb_word_index()\n",
+    "\n",
+    "imdb_word_index = get_imdb_word_index()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Create a recurrent neural network model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the maximum index value\n",
+    "\n",
+    "max_index_value = max(imdb_word_index.values())\n",
+    "embedding_dim = 16"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Using Sequential, build the model:\n",
+    "# 1. Embedding.\n",
+    "# 2. LSTM.\n",
+    "# 3. Dense.\n",
+    "\n",
+    "model = tf.keras.Sequential([\n",
+    "    tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim, mask_zero=True),\n",
+    "    tf.keras.layers.LSTM(units=16),\n",
+    "    tf.keras.layers.Dense(units=1, activation='sigmoid')\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Compile and fit the model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compile the model with binary cross-entropy loss\n",
+    "\n",
+    "model.compile(loss='binary_crossentropy', metrics=['accuracy'], optimizer='adam')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train on 25000 samples\n",
+      "Epoch 1/3\n",
+      "25000/25000 [==============================] - 600s 24ms/sample - loss: 0.3952 - accuracy: 0.8190\n",
+      "Epoch 2/3\n",
+      "25000/25000 [==============================] - 522s 21ms/sample - loss: 0.2219 - accuracy: 0.9149\n",
+      "Epoch 3/3\n",
+      "25000/25000 [==============================] - 525s 21ms/sample - loss: 0.1721 - accuracy: 0.9382\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Fit the model and save its training history\n",
+    "\n",
+    "history = model.fit(x_train, y_train, epochs = 3, batch_size=32)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Plot learning curves"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "KeyError",
+     "evalue": "'val_accuracy'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-71-3b8680024394>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m\u001b[0m\n\u001b[1;32m      8\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      9\u001b[0m \u001b[0macc\u001b[0m      \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'accuracy'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 10\u001b[0;31m \u001b[0mval_acc\u001b[0m  \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'val_accuracy'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     11\u001b[0m \u001b[0mloss\u001b[0m     \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'loss'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     12\u001b[0m \u001b[0mval_loss\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'val_loss'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;31mKeyError\u001b[0m: 'val_accuracy'"
+     ]
+    }
+   ],
+   "source": [
+    "# Plot the training and validation accuracy\n",
+    "\n",
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "plt.style.use('ggplot')\n",
+    "\n",
+    "history_dict = history.history\n",
+    "\n",
+    "acc      = history_dict['accuracy']\n",
+    "val_acc  = history_dict['val_accuracy']\n",
+    "loss     = history_dict['loss']\n",
+    "val_loss = history_dict['val_loss']\n",
+    "\n",
+    "epochs = range(1, len(acc) + 1)\n",
+    "\n",
+    "plt.figure(figsize=(14,5))\n",
+    "plt.plot(epochs, acc, marker='.', label='Training acc')\n",
+    "plt.plot(epochs, val_acc, marker='.', label='Validation acc')\n",
+    "plt.title('Training and validation accuracy')\n",
+    "plt.xlabel('Epoch')\n",
+    "plt.ylabel('Classification accuracy')\n",
+    "plt.legend(loc='lower right')\n",
+    "plt.ylim(0, 1);"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Make predictions with the model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['ignore',\n",
+       " 'the',\n",
+       " 'bad',\n",
+       " 'reviews',\n",
+       " 'on',\n",
+       " 'here',\n",
+       " 'this',\n",
+       " 'film',\n",
+       " 'is',\n",
+       " 'awesome',\n",
+       " 'just',\n",
+       " 'before',\n",
+       " 'dawn',\n",
+       " 'is',\n",
+       " 'a',\n",
+       " 'great',\n",
+       " 'example',\n",
+       " 'of',\n",
+       " 'what',\n",
+       " 'can',\n",
+       " 'be',\n",
+       " 'done',\n",
+       " 'in',\n",
+       " 'a',\n",
+       " 'film',\n",
+       " 'with',\n",
+       " 'a',\n",
+       " 'minimal',\n",
+       " 'budget',\n",
+       " 'if',\n",
+       " 'you',\n",
+       " 'have',\n",
+       " 'a',\n",
+       " 'dedicated',\n",
+       " 'crew',\n",
+       " 'decent',\n",
+       " 'script',\n",
+       " 'and',\n",
+       " 'a',\n",
+       " 'cool',\n",
+       " 'idea',\n",
+       " 'for',\n",
+       " 'a',\n",
+       " 'film',\n",
+       " \"it's\",\n",
+       " 'a',\n",
+       " 'hell',\n",
+       " 'of',\n",
+       " 'a',\n",
+       " 'lot',\n",
+       " 'of',\n",
+       " 'fun',\n",
+       " 'br',\n",
+       " 'br',\n",
+       " 'i',\n",
+       " 'enjoyed',\n",
+       " 'it',\n",
+       " 'a',\n",
+       " 'lot',\n",
+       " 'more',\n",
+       " 'than',\n",
+       " 'most',\n",
+       " 'other',\n",
+       " \"80's\",\n",
+       " 'slashers',\n",
+       " 'because',\n",
+       " 'the',\n",
+       " 'killer',\n",
+       " 'is',\n",
+       " 'so',\n",
+       " 'unique',\n",
+       " 'wrong',\n",
+       " 'turn',\n",
+       " 'ripped',\n",
+       " 'this',\n",
+       " 'movie',\n",
+       " 'off',\n",
+       " 'something',\n",
+       " 'fierce',\n",
+       " \"there's\",\n",
+       " 'plenty',\n",
+       " 'of',\n",
+       " 'blood',\n",
+       " 'and',\n",
+       " 'scares',\n",
+       " 'my',\n",
+       " 'girlfriend',\n",
+       " 'was',\n",
+       " 'freaked',\n",
+       " 'out',\n",
+       " 'and',\n",
+       " 'she',\n",
+       " 'watches',\n",
+       " 'almost',\n",
+       " 'everything',\n",
+       " 'with',\n",
+       " 'me',\n",
+       " 'and',\n",
+       " \"doesn't\",\n",
+       " \"it's\",\n",
+       " 'got',\n",
+       " 'that',\n",
+       " 'creepiness',\n",
+       " 'to',\n",
+       " 'it',\n",
+       " 'br',\n",
+       " 'br',\n",
+       " \"i'd\",\n",
+       " 'say',\n",
+       " 'that',\n",
+       " 'just',\n",
+       " 'before',\n",
+       " 'dawn',\n",
+       " 'is',\n",
+       " 'the',\n",
+       " 'best',\n",
+       " 'early',\n",
+       " \"80's\",\n",
+       " 'slasher',\n",
+       " 'out',\n",
+       " 'there',\n",
+       " 'i',\n",
+       " 'really',\n",
+       " 'enjoyed',\n",
+       " 'it',\n",
+       " 'br',\n",
+       " 'br',\n",
+       " '8',\n",
+       " 'out',\n",
+       " 'of',\n",
+       " '10',\n",
+       " 'kids']"
+      ]
+     },
+     "execution_count": 73,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# View the first test data example sentence\n",
+    "# (invert the word index)\n",
+    "\n",
+    "inv_imdb_word_index = {value:key for key,value in imdb_word_index.items()}\n",
+    "[inv_imdb_word_index[index] for index in x_test[0] if index > 2]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[0.9923074]], dtype=float32)"
+      ]
+     },
+     "execution_count": 74,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Get the model prediction using model.predict()\n",
+    "\n",
+    "model.predict(x_test[None, 0, :])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1"
+      ]
+     },
+     "execution_count": 75,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Get the corresponding label\n",
+    "\n",
+    "y_test[0]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "---\n",
+    "<a id=\"coding_tutorial_6\"></a>\n",
+    "## Stacked RNNs and the Bidirectional wrapper"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Load and transform the IMDB review sentiment dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to load and preprocess the IMDB dataset\n",
+    "\n",
+    "def get_and_pad_imdb_dataset(num_words=10000, maxlen=None, index_from=2):\n",
+    "    from tensorflow.keras.datasets import imdb\n",
+    "\n",
+    "    # Load the reviews\n",
+    "    (x_train, y_train), (x_test, y_test) = imdb.load_data(path='imdb.npz',\n",
+    "                                                          num_words=num_words,\n",
+    "                                                          skip_top=0,\n",
+    "                                                          maxlen=maxlen,\n",
+    "                                                          start_char=1,\n",
+    "                                                          oov_char=2,\n",
+    "                                                          index_from=index_from)\n",
+    "\n",
+    "    x_train = tf.keras.preprocessing.sequence.pad_sequences(x_train,\n",
+    "                                                        maxlen=None,\n",
+    "                                                        padding='pre',\n",
+    "                                                        truncating='pre',\n",
+    "                                                        value=0)\n",
+    "    \n",
+    "    x_test = tf.keras.preprocessing.sequence.pad_sequences(x_test,\n",
+    "                                                           maxlen=None,\n",
+    "                                                           padding='pre',\n",
+    "                                                           truncating='pre',\n",
+    "                                                           value=0)\n",
+    "    return (x_train, y_train), (x_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the dataset\n",
+    "\n",
+    "(x_train, y_train), (x_test, y_test) = get_and_pad_imdb_dataset(num_words=5000, maxlen=250)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# A function to get the dataset word index\n",
+    "\n",
+    "def get_imdb_word_index(num_words=10000, index_from=2):\n",
+    "    imdb_word_index = tf.keras.datasets.imdb.get_word_index(\n",
+    "                                        path='imdb_word_index.json')\n",
+    "    imdb_word_index = {key: value + index_from for\n",
+    "                       key, value in imdb_word_index.items() if value <= num_words-index_from}\n",
+    "    return imdb_word_index"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the word index using get_imdb_word_index()\n",
+    "\n",
+    "imdb_word_index = get_imdb_word_index(num_words=5000)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Build stacked and bidirectional recurrent models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the maximum index value and specify an embedding dimension\n",
+    "\n",
+    "max_index_value = max(imdb_word_index.values())\n",
+    "embedding_dim = 16"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 84,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Using Sequential, build a stacked LSTM model via return_sequences=True\n",
+    "\n",
+    "model = tf.keras.Sequential([\n",
+    "    tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim, mask_zero=True),\n",
+    "    tf.keras.layers.LSTM(units=32, return_sequences=True),\n",
+    "    tf.keras.layers.LSTM(units=32, return_sequences=False),\n",
+    "    tf.keras.layers.Dense(units=1, activation='sigmoid')\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 87,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Using Sequential, build a bidirectional RNN with merge_mode='sum'\n",
+    "\n",
+    "model = tf.keras.Sequential([\n",
+    "    tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim, mask_zero=True),\n",
+    "    tf.keras.layers.Bidirectional(layer=tf.keras.layers.LSTM(units=8), merge_mode='sum',\n",
+    "                                 backward_layer=tf.keras.layers.GRU(units=8, go_backwards=True)),\n",
+    "    tf.keras.layers.Dense(units=1, activation='sigmoid')\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create a model featuring both stacked recurrent layers and a bidirectional layer\n",
+    "\n",
+    "model = tf.keras.Sequential([\n",
+    "    tf.keras.layers.Embedding(input_dim=max_index_value+1, output_dim=embedding_dim),\n",
+    "    tf.keras.layers.Bidirectional(layer=tf.keras.layers.LSTM(units=8, return_sequences=True), merge_mode='concat'),\n",
+    "    tf.keras.layers.GRU(units=8, return_sequences=False),\n",
+    "    tf.keras.layers.Dense(units=1, activation='sigmoid')\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Compile and fit the model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compile the model\n",
+    "\n",
+    "model.compile(loss='binary_crossentropy', metrics=['accuracy'], optimizer='adam')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Train on 25000 samples\n",
+      "Epoch 1/3\n",
+      "  416/25000 [..............................] - ETA: 32:29 - loss: 0.6937 - accuracy: 0.4453"
+     ]
+    },
+    {
+     "ename": "KeyboardInterrupt",
+     "evalue": "",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mKeyboardInterrupt\u001b[0m                         Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-91-0178816d1aed>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;31m# Train the model, saving its history\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      2\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 3\u001b[0;31m \u001b[0mhistory\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mmodel\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfit\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mx_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0my_train\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mepochs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;36m3\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mbatch_size\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m32\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/keras/engine/training.py\u001b[0m in \u001b[0;36mfit\u001b[0;34m(self, x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, validation_freq, max_queue_size, workers, use_multiprocessing, **kwargs)\u001b[0m\n\u001b[1;32m    726\u001b[0m         \u001b[0mmax_queue_size\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mmax_queue_size\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    727\u001b[0m         \u001b[0mworkers\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mworkers\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 728\u001b[0;31m         use_multiprocessing=use_multiprocessing)\n\u001b[0m\u001b[1;32m    729\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    730\u001b[0m   def evaluate(self,\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/keras/engine/training_v2.py\u001b[0m in \u001b[0;36mfit\u001b[0;34m(self, model, x, y, batch_size, epochs, verbose, callbacks, validation_split, validation_data, shuffle, class_weight, sample_weight, initial_epoch, steps_per_epoch, validation_steps, validation_freq, **kwargs)\u001b[0m\n\u001b[1;32m    322\u001b[0m                 \u001b[0mmode\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mModeKeys\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mTRAIN\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    323\u001b[0m                 \u001b[0mtraining_context\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mtraining_context\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 324\u001b[0;31m                 total_epochs=epochs)\n\u001b[0m\u001b[1;32m    325\u001b[0m             \u001b[0mcbks\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mmake_logs\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mmodel\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mepoch_logs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mtraining_result\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mModeKeys\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mTRAIN\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    326\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/keras/engine/training_v2.py\u001b[0m in \u001b[0;36mrun_one_epoch\u001b[0;34m(model, iterator, execution_function, dataset_size, batch_size, strategy, steps_per_epoch, num_samples, mode, training_context, total_epochs)\u001b[0m\n\u001b[1;32m    121\u001b[0m         step=step, mode=mode, size=current_batch_size) as batch_logs:\n\u001b[1;32m    122\u001b[0m       \u001b[0;32mtry\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 123\u001b[0;31m         \u001b[0mbatch_outs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mexecution_function\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0miterator\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    124\u001b[0m       \u001b[0;32mexcept\u001b[0m \u001b[0;34m(\u001b[0m\u001b[0mStopIteration\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0merrors\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mOutOfRangeError\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    125\u001b[0m         \u001b[0;31m# TODO(kaftan): File bug about tf function and errors.OutOfRangeError?\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/keras/engine/training_v2_utils.py\u001b[0m in \u001b[0;36mexecution_function\u001b[0;34m(input_fn)\u001b[0m\n\u001b[1;32m     84\u001b[0m     \u001b[0;31m# `numpy` translates Tensors to values in Eager mode.\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     85\u001b[0m     return nest.map_structure(_non_none_constant_value,\n\u001b[0;32m---> 86\u001b[0;31m                               distributed_function(input_fn))\n\u001b[0m\u001b[1;32m     87\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     88\u001b[0m   \u001b[0;32mreturn\u001b[0m \u001b[0mexecution_function\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/def_function.py\u001b[0m in \u001b[0;36m__call__\u001b[0;34m(self, *args, **kwds)\u001b[0m\n\u001b[1;32m    455\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    456\u001b[0m     \u001b[0mtracing_count\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_get_tracing_count\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 457\u001b[0;31m     \u001b[0mresult\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_call\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwds\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    458\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mtracing_count\u001b[0m \u001b[0;34m==\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_get_tracing_count\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    459\u001b[0m       \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_call_counter\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcalled_without_tracing\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/def_function.py\u001b[0m in \u001b[0;36m_call\u001b[0;34m(self, *args, **kwds)\u001b[0m\n\u001b[1;32m    485\u001b[0m       \u001b[0;31m# In this case we have created variables on the first call, so we run the\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    486\u001b[0m       \u001b[0;31m# defunned version which is guaranteed to never create variables.\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 487\u001b[0;31m       \u001b[0;32mreturn\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_stateless_fn\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m*\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwds\u001b[0m\u001b[0;34m)\u001b[0m  \u001b[0;31m# pylint: disable=not-callable\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    488\u001b[0m     \u001b[0;32melif\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_stateful_fn\u001b[0m \u001b[0;32mis\u001b[0m \u001b[0;32mnot\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    489\u001b[0m       \u001b[0;31m# Release the lock early so that multiple threads can perform the call\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/function.py\u001b[0m in \u001b[0;36m__call__\u001b[0;34m(self, *args, **kwargs)\u001b[0m\n\u001b[1;32m   1821\u001b[0m     \u001b[0;34m\"\"\"Calls a graph function specialized to the inputs.\"\"\"\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1822\u001b[0m     \u001b[0mgraph_function\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkwargs\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_maybe_define_function\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1823\u001b[0;31m     \u001b[0;32mreturn\u001b[0m \u001b[0mgraph_function\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_filtered_call\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m  \u001b[0;31m# pylint: disable=protected-access\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   1824\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1825\u001b[0m   \u001b[0;34m@\u001b[0m\u001b[0mproperty\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/function.py\u001b[0m in \u001b[0;36m_filtered_call\u001b[0;34m(self, args, kwargs)\u001b[0m\n\u001b[1;32m   1139\u001b[0m          if isinstance(t, (ops.Tensor,\n\u001b[1;32m   1140\u001b[0m                            resource_variable_ops.BaseResourceVariable))),\n\u001b[0;32m-> 1141\u001b[0;31m         self.captured_inputs)\n\u001b[0m\u001b[1;32m   1142\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1143\u001b[0m   \u001b[0;32mdef\u001b[0m \u001b[0m_call_flat\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcaptured_inputs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcancellation_manager\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;32mNone\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/function.py\u001b[0m in \u001b[0;36m_call_flat\u001b[0;34m(self, args, captured_inputs, cancellation_manager)\u001b[0m\n\u001b[1;32m   1222\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mexecuting_eagerly\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1223\u001b[0m       flat_outputs = forward_function.call(\n\u001b[0;32m-> 1224\u001b[0;31m           ctx, args, cancellation_manager=cancellation_manager)\n\u001b[0m\u001b[1;32m   1225\u001b[0m     \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   1226\u001b[0m       \u001b[0mgradient_name\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_delayed_rewrite_functions\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mregister\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/function.py\u001b[0m in \u001b[0;36mcall\u001b[0;34m(self, ctx, args, cancellation_manager)\u001b[0m\n\u001b[1;32m    509\u001b[0m               \u001b[0minputs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0margs\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    510\u001b[0m               \u001b[0mattrs\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"executor_type\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mexecutor_type\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"config_proto\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mconfig\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 511\u001b[0;31m               ctx=ctx)\n\u001b[0m\u001b[1;32m    512\u001b[0m         \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    513\u001b[0m           outputs = execute.execute_with_cancellation(\n",
+      "\u001b[0;32m/opt/conda/lib/python3.7/site-packages/tensorflow_core/python/eager/execute.py\u001b[0m in \u001b[0;36mquick_execute\u001b[0;34m(op_name, num_outputs, inputs, attrs, ctx, name)\u001b[0m\n\u001b[1;32m     59\u001b[0m     tensors = pywrap_tensorflow.TFE_Py_Execute(ctx._handle, device_name,\n\u001b[1;32m     60\u001b[0m                                                \u001b[0mop_name\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0minputs\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mattrs\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 61\u001b[0;31m                                                num_outputs)\n\u001b[0m\u001b[1;32m     62\u001b[0m   \u001b[0;32mexcept\u001b[0m \u001b[0mcore\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_NotOkStatusException\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     63\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mname\u001b[0m \u001b[0;32mis\u001b[0m \u001b[0;32mnot\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;31mKeyboardInterrupt\u001b[0m: "
+     ]
+    }
+   ],
+   "source": [
+    "# Train the model, saving its history\n",
+    "\n",
+    "history = model.fit(x_train, y_train, epochs = 3, batch_size=32)\n",
+    "#Stopped Training the model, it'd take too long"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 82,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "KeyError",
+     "evalue": "'val_accuracy'",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-82-3b8680024394>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m\u001b[0m\n\u001b[1;32m      8\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      9\u001b[0m \u001b[0macc\u001b[0m      \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'accuracy'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 10\u001b[0;31m \u001b[0mval_acc\u001b[0m  \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'val_accuracy'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     11\u001b[0m \u001b[0mloss\u001b[0m     \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'loss'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     12\u001b[0m \u001b[0mval_loss\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mhistory_dict\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'val_loss'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;31mKeyError\u001b[0m: 'val_accuracy'"
+     ]
+    }
+   ],
+   "source": [
+    "# Plot the training and validation accuracy\n",
+    "\n",
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "plt.style.use('ggplot')\n",
+    "\n",
+    "history_dict = history.history\n",
+    "\n",
+    "acc      = history_dict['accuracy']\n",
+    "val_acc  = history_dict['val_accuracy']\n",
+    "loss     = history_dict['loss']\n",
+    "val_loss = history_dict['val_loss']\n",
+    "\n",
+    "epochs = range(1, len(acc) + 1)\n",
+    "\n",
+    "plt.figure(figsize=(14,5))\n",
+    "plt.plot(epochs, acc, marker='.', label='Training acc')\n",
+    "plt.plot(epochs, val_acc, marker='.', label='Validation acc')\n",
+    "plt.title('Training and validation accuracy')\n",
+    "plt.xlabel('Epoch')\n",
+    "plt.ylabel('Classification accuracy')\n",
+    "plt.legend(loc='lower right')\n",
+    "plt.ylim(0, 1);"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.1"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
